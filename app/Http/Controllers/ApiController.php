@@ -36,30 +36,34 @@ class ApiController extends Controller
     public function index()
     {
         try {
-            // $result1 = $this->_lever->postings();
-            // collect($result1['data'])->each(function ($post) {
-            //     $payload = [
-            //         'fields' => [
-            //             'lever-id-2'        => $post['id'],
-            //             'name'              => $post['text'],
-            //             'job-description'   => str_replace(PHP_EOL, '<br/>', $post['content']['description']),
-            //             'closing'           => $post['content']['closingHtml'],
-            //             'lists'             => $this->sortLists($post['content']['lists']),
-            //             'link-to-job'       => $post['urls']['show'],
-            //             'workplace'         => $post['categories']['commitment'],
-            //             'career-description'=> $post['categories']['location'],
-            //             'team'              => $post['categories']['team'],
-            //             '_draft'            => false,
-            //             '_archived'         => false
-            //         ]
-            //     ];
-            //     $this->_webflow->addItems($payload);
-            // });
+            $result = $this->_lever->postings();
+            collect($result['data'])->each(function ($post) {
+                $payload = [
+                    'fields' => [
+                        'lever-id-2'        => $post['id'],
+                        'name'              => $post['text'],
+                        'job-description'   => str_replace(PHP_EOL, '<br/>', $post['content']['description']),
+                        'closing'           => $post['content']['closingHtml'],
+                        'lists'             => $this->sortLists($post['content']['lists']),
+                        'link-to-job'       => $post['urls']['show'],
+                        'workplace'         => $post['categories']['commitment'],
+                        'career-description'=> $post['categories']['location'],
+                        'team'              => $post['categories']['team'],
+                        '_draft'            => false,
+                        '_archived'         => false
+                    ]
+                ];
+                $this->_webflow->addItems($payload);
+            });
             // Show all the job postings
             $items = $this->_webflow->items(); dd($items);
+            return response()->json([
+                'items' => $items
+            ], 200);
         } catch (Exception $e) {
             
         }
+        return response()->json([], 400);
     }
 
     /**

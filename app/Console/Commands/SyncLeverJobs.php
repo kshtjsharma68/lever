@@ -14,7 +14,7 @@ class SyncLeverJobs extends Command {
      *
      * @var string
      */
-    protected $name = 'LeverJobs';
+    protected $name = 'Lever:Job';
 
     /**
      * The console command description.
@@ -45,8 +45,9 @@ class SyncLeverJobs extends Command {
     public function handle()
     { 
         try {
-            $result1 = $this->_lever->postings();
-            collect($result1['data'])->each(function ($post) {dd($post);
+            $this->info('Executing the command');
+            $result = $this->_lever->postings();
+            collect($result['data'])->each(function ($post) {
                 $payload = [
                     'fields' => [
                         'lever-id-2'        => $post['id'],
@@ -65,10 +66,11 @@ class SyncLeverJobs extends Command {
                 $this->_webflow->addItems($payload);
             });
             // Show all the job postings
-            $items = $this->_webflow->items();
+            // $items = $this->_webflow->items();
         } catch (Exception $e) {
             
         }
+        $this->info('Lever command execution completed');
     }
 
 }

@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        'App\Console\Commands\SyncLeverJobs'
+        SyncLeverJobs::class
     ];
 
     /**
@@ -25,6 +25,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     { //twiceDaily(1, 13)
-        $schedule->command(SyncLeverJobs::class)->everyMinute();
+        $schedule->command(SyncLeverJobs::class);
     }
 }
