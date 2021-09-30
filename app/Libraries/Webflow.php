@@ -26,19 +26,48 @@ class Webflow
         $this->client = Http::withOptions($this->options);
     }
 
+    /**
+     * Update a collection item
+     */
     function updateCollection($data)
     {
         return $this->client->post('postings')->throw()->json();
     }
 
-    function addItems($fields)
+    /**
+     * Add single post/item to webflow collection
+     * @param array $fields
+     */
+    function addItem($fields)
     {
         return $this->client->post('items', $fields)->throw()->json();
     }
 
+    /**
+     * Update a single item/post in collection
+     * @param string $id
+     * @param array $fields
+     */
+    function updateItem($id, $fields)
+    {   
+        return $this->client->put('items/'.$id, $fields)->throw()->json();
+    }
+
+    /**
+     * Fetch all collection items/posts
+     */
     function items()
     {
         return $this->client->get('items')->throw()->json();
+    }
+
+    /**
+     * Get single item/post
+     * @param string $id
+     */
+    function getItem($id)
+    {
+        return $this->client->get('items/'.$id)->throw()->json();
     }
 
 }
