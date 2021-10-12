@@ -69,6 +69,62 @@ class ApiController extends Controller
         return response()->json([], 400);
     }
 
+
+        /**
+     * Fetch all the information from 
+     * lever and check If Status is published or not
+     * Webflow collection
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function syncUnpublish()
+    {
+        try {
+            //Fetching collection from Lever
+            $records = $this->_webflow->items();
+            $webflowPosts = collect($records['items']);
+
+            if ($webflowPosts->count()) {
+                // Show all the job postings
+                $result = $this->_lever->postings();
+                $leverPostings = collect($result['data']);         
+                $webflowPosts ->each(function ($collection) use ($leverPostings) {
+
+                $collectionExists=$leverPostings->contains('id', $collection['lever-id-2']);
+                
+                if ($collectionExists) {
+                    //post is published , If Collection is still draft update with new Data  and set draft to false
+                    
+                    if($collection["_draft"]){
+                        $post= $leverPostings->where('id',$collection['lever-id-2'])->first();
+                        $payload = $this->__createUploadPayload($post,false, $collection);
+                        $this->_webflow->updateItem($collection["_id"], $payload);
+                    }
+
+                  }else{
+                    $AcccpetedKeys=["lever-id-2","name","job-description","closing","lists","link-to-job","workplace","career-description","team","_archived","slug"];
+                    $payload=["fields"=>[]];
+                    foreach ( $AcccpetedKeys as $value) {
+                        $payload["fields"][$value]=$collection[$value];
+                      }
+                      $payload["fields"]["_draft"]=true;
+                     $this->_webflow->updateItem($collection["_id"],$payload);
+                    }
+                });
+                //Sending response
+                return response()->json([
+                    'items' => $webflowPosts
+                ], 200);
+            }
+            return response()->json(["message"=>"No posting on lever.'"]);
+        } catch (Exception $e) {
+            dd($e);
+            dd($e->getResponse()->getBody()->getContents());
+        }
+        return response()->json([], 400);
+    }
+
+
     /**
      * Sort list data
      */
@@ -132,4 +188,34 @@ class ApiController extends Controller
 
         return $payload;
     }
+
+        /**
+     * Create payload for webflow
+     * @param array $post
+     * @param bool
+     * @param object
+     */
+    private function __createUploadPayload(array $post, $draft = true, $existing)
+    {
+        $payload =  [
+            'fields' => [
+                'lever-id-2'        => $post['id'],
+                'name'              => $post['text'],
+                'job-description'   => str_replace(PHP_EOL, '<br/>', $post['content']['description']),
+                'closing'           => $post['content']['closingHtml'],
+                'lists'             => $this->sortLists($post['content']['lists']),
+                'link-to-job'       => $post['urls']['show'],
+                'workplace'         => $post['categories']['commitment'],
+                'career-description' => $post['categories']['location'],
+                'team'              => $post['categories']['team'],
+                '_draft'            => $draft,
+                '_archived'         => iswebflowArchived($post['state']),
+                "slug"              => $existing->slug
+
+            ]
+        ];
+
+        return $payload;
+    }
+
 }

@@ -16,3 +16,4 @@
 // });
 
 $router->get('/', 'ApiController@index');
+$router->get('/syncUnpublish', 'ApiController@syncUnpublish');
