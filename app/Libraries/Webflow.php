@@ -10,12 +10,12 @@ class Webflow
     private $client;
     private $options;
 
-    function __construct()
+    function __construct($isProposal = false)
     {
         $this->options = [
             'http_errors' => false,
             'debug' => false,
-            'base_uri' => 'https://api.webflow.com/collections/'.config('webflow.collection_id').'/',
+            'base_uri' => 'https://api.webflow.com/collections/'.config($isProposal ? 'webflow.porposal_collection_id' : 'webflow.collection_id').'/',
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
@@ -68,6 +68,17 @@ class Webflow
     function getItem($id)
     {
         return $this->client->get('items/'.$id)->throw()->json();
+    }
+
+    /**
+     * Get proposal collection item by slug
+     */
+    function getProposalBySlug($slug = '')
+    {
+        $query = [
+            'slug' => $slug
+        ];
+        return $this->client->get('items', $query)->throw()->json();
     }
 
 }

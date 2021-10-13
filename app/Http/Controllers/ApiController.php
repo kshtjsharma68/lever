@@ -8,6 +8,7 @@ use App\Libraries\Lever;
 use App\Libraries\Webflow;
 use Exception;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
@@ -131,5 +132,49 @@ class ApiController extends Controller
         }
 
         return $payload;
+    }
+
+    /**
+     * Check password for proposal Password
+     * @param Request $request
+     */
+    function checkProposalPassword(Request $request) 
+    {
+        $status = 400;
+        try {
+            //Get data from request attributes bag
+            $password = $request->input('password', '');
+            $slug = $request->input('slug', '');
+
+            //Check if data exists
+            if ( strlen($password) && strlen($slug) ){
+                //Conversation with webflow for items
+                $this->_webflow = new Webflow(true);
+                $proposals = $this->_webflow->getProposalBySlug($slug);
+                $proposal = collect($proposals['items'])->where('slug', $slug)->first();
+
+                //Check if credentials match 
+                if ( $password == $proposal['password'] ) {
+                    return $this->__sendJsonResponse(200);
+                } else {
+                    throw new Exception('Incorrect password', 403);
+                }
+            }
+            throw new Exception('', 403);
+        } catch (Exception $e) {
+            //Fetching error code from exception
+            $status = $e->getCode();
+        }
+        return $this->__sendJsonResponse($status);
+    }
+
+    /**
+     * generating common response 
+     * @param int $status
+     * @param array $data
+     */
+    private function __sendJsonResponse($status = 400, $data = []) 
+    {
+        return response()->json(['status' => $status, 'data' => $data ], $status);
     }
 }

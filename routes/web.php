@@ -11,8 +11,10 @@
 |
 */
 
-// $router->get('/', function () use ($router) {
-//     return $router->app->version();
+// $router->get('/{route:.*}/', function () use ($router) {
+//     return view('index');
 // });
 
-$router->get('/', 'ApiController@index');
+$router->post('/check-proposal-password', 'ApiController@checkProposalPassword');
+
+// $router->get('/', 'ApiController@index');
