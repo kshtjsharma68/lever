@@ -64,6 +64,7 @@ class ApiController extends Controller
             }
             throw new Exception('No posting on lever.');
         } catch (Exception $e) {
+            dd($e);
             dd($e->getResponse()->getBody()->getContents());
         }
         return response()->json([], 400);
@@ -87,14 +88,13 @@ class ApiController extends Controller
             if ($webflowPosts->count()) {
                 // Show all the job postings
                 $result = $this->_lever->postings();
-                $leverPostings = collect($result['data']);         
+                $leverPostings = collect($result['data']);   
+                return $leverPostings;
                 $webflowPosts ->each(function ($collection) use ($leverPostings) {
-
-                $collectionExists=$leverPostings->contains('id', $collection['lever-id-2']);
-                
+                $collectionExists=$leverPostings->contains('id', $collection['lever-id-2']);    
                 if ($collectionExists) {
-                    //post is published , If Collection is still draft update with new Data  and set draft to false
-                    
+                    //post is published , 
+                    // If Collection is still draft update with new Data  and set draft to false      
                     if($collection["_draft"]){
                         $post= $leverPostings->where('id',$collection['lever-id-2'])->first();
                         $payload = $this->__createUploadPayload($post,false, $collection);
@@ -102,14 +102,18 @@ class ApiController extends Controller
                     }
 
                   }else{
-                    $AcccpetedKeys=["lever-id-2","name","job-description","closing","lists","link-to-job","workplace","career-description","team","_archived","slug"];
-                    $payload=["fields"=>[]];
-                    foreach ( $AcccpetedKeys as $value) {
-                        $payload["fields"][$value]=$collection[$value];
-                      }
-                      $payload["fields"]["_draft"]=true;
-                     $this->_webflow->updateItem($collection["_id"],$payload);
-                    }
+                    //   post unpublished
+                    // upated post with exisitng data and disable 
+                    if(!$collection["_draft"]){
+                        $AcccpetedKeys=["lever-id-2","name","job-description","closing","lists","link-to-job","workplace","career-description","team","_archived","slug"];
+                        $payload=["fields"=>[]];
+                        foreach ( $AcccpetedKeys as $value) {
+                            $payload["fields"][$value]=$collection[$value];
+                        }
+                        $payload["fields"]["_draft"]=true;
+                        $this->_webflow->updateItem($collection["_id"],$payload);
+                        }
+                    }   
                 });
                 //Sending response
                 return response()->json([
