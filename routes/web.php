@@ -18,3 +18,5 @@
 $router->post('/check-proposal-password', 'ApiController@checkProposalPassword');
 
 // $router->get('/', 'ApiController@index');
+// $router->get('/', 'ApiController@index');
+$router->get('/syncUnpublish', 'ApiController@syncUnpublish');
