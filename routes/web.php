@@ -11,12 +11,17 @@
 |
 */
 
+// Authentication testing 
 // $router->get('/{route:.*}/', function () use ($router) {
 //     return view('index');
 // });
+// $router->post('/check-proposal-password', 'ApiController@checkProposalPassword');
 
-$router->post('/check-proposal-password', 'ApiController@checkProposalPassword');
 
-// $router->get('/', 'ApiController@index');
-// $router->get('/', 'ApiController@index');
+//Basic functionality
+// $router->get('/', function () use ($router) {
+//     return $router->app->version();
+// });
+
+$router->get('/', 'ApiController@index');
 $router->get('/syncUnpublish', 'ApiController@syncUnpublish');

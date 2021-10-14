@@ -40,18 +40,20 @@ class ApiController extends Controller
             $result = $this->_lever->postings();
             //Fetching collection
             $leverPostings = collect($result['data']);
-            if ($leverPostings->count()) {
+            if (!$leverPostings->count()) {
                 // Show all the job postings
                 $records = $this->_webflow->items();
                 $webflowPosts = collect($records['items']);
                 collect($result['data'])->each(function ($post) use ($webflowPosts) {
+                      
                     $exists = $this->__checkIfPostExists($post, $webflowPosts);
-                    if ($exists['status']) {
+                    if ($exists['status']) { 
+                      
                         $existingPost = (object)($exists['post']);
                         $payload = $this->__createpayload($post, 1, $existingPost);
                         //Update webflow post
                         $this->_webflow->updateItem($existingPost->_id, $payload);
-                        dd($this->_webflow->getItem($existingPost->_id));
+
                     } else {
                         //Add webflow post for publishing
                         $payload = $this->__createpayload($post, 0, (object)[]);
@@ -63,11 +65,10 @@ class ApiController extends Controller
                     'items' => $webflowPosts
                 ], 200);
             }
-            throw new Exception('No posting on lever.');
         } catch (Exception $e) {
-            dd($e);
-            dd($e->getResponse()->getBody()->getContents());
+            
         }
+
         return response()->json([], 400);
     }
 
@@ -90,8 +91,8 @@ class ApiController extends Controller
                 // Show all the job postings
                 $result = $this->_lever->postings();
                 $leverPostings = collect($result['data']);   
-                return $leverPostings;
-                $webflowPosts ->each(function ($collection) use ($leverPostings) {
+                
+                $webflowPosts->each(function ($collection) use ($leverPostings) {
                 $collectionExists=$leverPostings->contains('id', $collection['lever-id-2']);    
                 if ($collectionExists) {
                     //post is published , 

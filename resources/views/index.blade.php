@@ -1,73 +1,45 @@
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="">
 
     <title>Derrick</title>
 
     <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="" defer></script>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
 
     <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="" rel="stylesheet">
+    <style type="text/css">
+        .window {
+            display: none;
+        }
+        .intro-window {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div id="app">
         <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}">
-                    {{ config('app.name', 'Laravel') }}
-                </a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <!-- Left Side Of Navbar -->
-                    <ul class="navbar-nav mr-auto">
-
-                    </ul>
-
-                    <!-- Right Side Of Navbar -->
-                    <ul class="navbar-nav ml-auto">
-                        <!-- Authentication Links -->
-                        @guest
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('auth.login') }}">{{ __('Login') }}</a>
-                            </li>
-                            @if (Route::has('register'))
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('auth.register') }}">{{ __('Register') }}</a>
-                                </li>
-                            @endif
-                        @else
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }} <span class="caret"></span>
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
-                        @endguest
-                    </ul>
+                <div class="l-window">
+                    <form id="wf-form-password-form">
+                            <input type="password" name="password"/>
+                            <button type="submit">Submit</button>
+                    </form>
+                </div>
+                <div class="intro-window">
+                    Container inside
                 </div>
             </div>
         </nav>
@@ -77,17 +49,18 @@
         </main>
     </div>
 </body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     var API_ENDPOINT = "http://localhost:8000/";
     var slug = '';
     
         window.onload = function() {
-            if( !localStorage.hasOwnProperty('session') ) {
+            if( !sessionStorage.hasOwnProperty('session') ) {
                 //Fetch slug
                 slug = getSlug();
             }
-        };
-        if (localStorage.hasOwnProperty('session')) {
+        }; 
+        if (sessionStorage.hasOwnProperty('session')) {
             //Check if session is still active
             if ( sessionActive() ) {
                 showInfoContainer();
@@ -99,12 +72,10 @@
             showProtectedContainer();
         }
 
-        $('#password-form').submit(function(e) { 
+        $('#wf-form-password-form').submit(function(e) { 
             e.preventDefault();
-            var data = $(this).serialize()+"&slug="+slug;
-            console.log("=====form submitting=====")
-            var form = sendForm('/check-proposal-password', data);
-            console.log('=====form submitted======')
+            var data = $(this).serialize()+"&slug="+getSlug();
+            var form = sendForm('check-proposal-password', data);
             form.done(function(response) {
                 showInfoContainer();
                 createSession();
@@ -117,12 +88,12 @@
         }
 
         function showProtectedContainer() {
-            $('.window').css('display', 'flex');
+            $('.l-window').css('display', 'flex');
             $('.intro-window').css('display', 'none');
         }
 
         function showInfoContainer() {
-            $('.window').css('display', 'none');
+            $('.l-window').css('display', 'none');
             $('.intro-window').css('display', 'flex');
         }
 
@@ -147,16 +118,25 @@
 
         function createSession()
         {
+            var session = sessionStorage.hasOwnProperty('session') ? JSON.parse(sessionStorage.getItem('session')) : {};
             var session = {
-                'start': + new Date()
+                ...session,
+                [getSlug()]: {
+                    'start': + new Date()
+                }
             }
-            localStorage.setItem('session',JSON.stringify(session))
+            sessionStorage.setItem('session',JSON.stringify(session))
         }
 
         function sessionActive()
         {
-            var sessionTime = JSON.parse(localStorage.getItem('session'))
-            return ( ( new Date - new Date(sessionTime.start)) / 1000 ) < ( 4 * 60 *60 ); 
+            var session = JSON.parse(sessionStorage.getItem('session'));
+            let slug  = getSlug();
+            //Check if session is for slug
+            if (session[slug]) {
+                return ( ( new Date - new Date(session[slug].start)) / 1000 ) < ( 4 * 60 * 60 );
+            }            
+            return false;             
         }
 </script>
 </html>

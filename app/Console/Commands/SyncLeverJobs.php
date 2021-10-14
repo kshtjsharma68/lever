@@ -50,7 +50,7 @@ class SyncLeverJobs extends Command {
             //Fetching collection
             $leverPostings = collect($result['data']);
             $this->info('Posts Found'.   $leverPostings->count());
-            if ($leverPostings->count()) {
+            if (!$leverPostings->count()) {
                 // Show all the job postings
                 $records = $this->_webflow->items();
                 $webflowPosts = collect($records['items']);
@@ -64,10 +64,10 @@ class SyncLeverJobs extends Command {
                         //Update webflow post
                         $this->_webflow->updateItem($existingPost->_id, $payload);
                         $this->info('Updated Collection '.$existingPost->_id);
-                        // dd($this->_webflow->getItem($existingPost->_id));
+
                     } else {
                         //Add webflow post for publishing
-                        $this->info('Creating Collection '.$existingPost->_id);
+                        $this->info('Creating Collection ');
                         $payload = $this->__createpayload($post, 0, (object)[]);
                         $this->_webflow->addItem($payload);
                     }
@@ -78,7 +78,7 @@ class SyncLeverJobs extends Command {
                 ], 200);
             }
         } catch (Exception $e) {
-            
+            $this->info('lever exception: '.$e->getMessage());
         }
         $this->info('Lever command execution completed');
     }
