@@ -39,7 +39,7 @@ class ApiController extends Controller
         try {
             $result = $this->_lever->postings();
             //Fetching collection
-            $leverPostings = collect($result['data']);
+            $leverPostings = collect($result['data']);dd($leverPostings);
             if (!$leverPostings->count()) {
                 // Show all the job postings
                 $records = $this->_webflow->items();
@@ -267,4 +267,13 @@ class ApiController extends Controller
         return $payload;
     }
 
+
+    /**
+     * Publish site
+     */
+    public function publishSite() 
+    {
+        return publishSite();
+        
+    }
 }

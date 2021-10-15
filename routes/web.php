@@ -24,4 +24,5 @@
 // });
 
 $router->get('/', 'ApiController@index');
+$router->get('/publish-site', 'ApiController@publishSite');
 $router->get('/syncUnpublish', 'ApiController@syncUnpublish');

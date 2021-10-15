@@ -26,6 +26,22 @@ class Webflow
         $this->client = Http::withOptions($this->options);
     }
 
+    private function siteClient()
+    {
+        $this->options = [
+            'http_errors' => false,
+            'debug' => false,
+            'base_uri' => 'https://api.webflow.com/sites/',
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                "Authorization"=>"Bearer ".config('webflow.key'),
+                "accept-version"=>"1.0.0"
+            ]
+        ];
+        return Http::withOptions($this->options);
+    }
+
     /**
      * Update a collection item
      */
@@ -80,5 +96,27 @@ class Webflow
         ];
         return $this->client->get('items', $query)->throw()->json();
     }
+
+    function siteLists()
+    {   
+        return $this->siteClient()->get('/')->throw()->json();
+    }
+
+    function getSiteDomains($siteId)
+    {
+        return $this->siteClient()->get('/'.$siteId.'/domains')->throw()->json();
+    }
+
+    /**
+     * Publish single site
+     * @param string $siteId
+     */
+    function publishSingleSite($siteId, $domains)
+    {
+        $data = [
+            'domains' => $domains
+        ];
+        return $this->siteClient()->post('/'.$siteId.'/publish', $data)->throw()->json();
+    } 
 
 }

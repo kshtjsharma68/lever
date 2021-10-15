@@ -45,17 +45,14 @@ class SyncLeverJobs extends Command {
     public function handle()
     { 
         try {
-            $this->info('Executing the command');
             $result = $this->_lever->postings();
             //Fetching collection
             $leverPostings = collect($result['data']);
-            $this->info('Posts Found'.   $leverPostings->count());
-            if (!$leverPostings->count()) {
-                // Show all the job postings
-                $records = $this->_webflow->items();
-                $webflowPosts = collect($records['items']);
-                collect($result['data'])->each(function ($post) use ($webflowPosts) {
-                      
+            // Show all the job postings
+            $records = $this->_webflow->items();
+            $webflowPosts = collect($records['items']);
+             if ( $leverPostings->count() ) {                
+                $leverPostings->each(function ($post) use ($webflowPosts) {                      
                     $exists = $this->__checkIfPostExists($post, $webflowPosts);
                     if ($exists['status']) { 
                       
@@ -63,20 +60,23 @@ class SyncLeverJobs extends Command {
                         $payload = $this->__createpayload($post, 1, $existingPost);
                         //Update webflow post
                         $this->_webflow->updateItem($existingPost->_id, $payload);
-                        $this->info('Updated Collection '.$existingPost->_id);
 
                     } else {
                         //Add webflow post for publishing
-                        $this->info('Creating Collection ');
                         $payload = $this->__createpayload($post, 0, (object)[]);
                         $this->_webflow->addItem($payload);
                     }
                 });
-                //Sending response
-                return response()->json([
-                    'items' => $webflowPosts
-                ], 200);
+            } else {
+            	$webflowPosts->each(function($post) {
+            		$payload['fields']['name'] = $post['name'];            		            				$payload['fields']['slug'] = $post['slug'];
+            		$payload['fields']['_draft'] = true;
+            		$payload['fields']['_archived'] = true;
+            		//Update webflow post
+                       $this->_webflow->updateItem($post['_id'], $payload);
+            	});
             }
+            publishSite();
         } catch (Exception $e) {
             $this->info('lever exception: '.$e->getMessage());
         }
