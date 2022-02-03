@@ -39,34 +39,41 @@ class ApiController extends Controller
         try {
             $result = $this->_lever->postings();
             //Fetching collection
-            $leverPostings = collect($result['data']);dd($leverPostings);
-            if (!$leverPostings->count()) {
-                // Show all the job postings
-                $records = $this->_webflow->items();
-                $webflowPosts = collect($records['items']);
-                collect($result['data'])->each(function ($post) use ($webflowPosts) {
-                      
+            $leverPostings = collect($result['data']);
+            // Show all the job postings
+            $records = $this->_webflow->items();
+            $webflowPosts = collect($records['items']);
+            if ($leverPostings->count()) {
+                $leverPostings->each(function ($post) use ($webflowPosts) {
                     $exists = $this->__checkIfPostExists($post, $webflowPosts);
-                    if ($exists['status']) { 
-                      
+                    if ($exists['status']) {
                         $existingPost = (object)($exists['post']);
-                        $payload = $this->__createpayload($post, 1, $existingPost);
+                        $payload = $this->__createpayload($post, $existingPost, 1);
                         //Update webflow post
                         $this->_webflow->updateItem($existingPost->_id, $payload);
-
                     } else {
                         //Add webflow post for publishing
-                        $payload = $this->__createpayload($post, 0, (object)[]);
+                        $payload = $this->__createpayload($post, (object)[], 0);
                         $this->_webflow->addItem($payload);
                     }
                 });
+            } else {
+                $webflowPosts->each(function ($post) {
+                    $payload['fields']['name'] = $post['name'];
+                    $payload['fields']['slug'] = $post['slug'];
+                    $payload['fields']['_draft'] = true;
+                    $payload['fields']['_archived'] = true;
+                    //Update webflow post
+                    $this->_webflow->updateItem($post['_id'], $payload);
+                });
+            }
+            publishSite();
                 //Sending response
                 return response()->json([
                     'items' => $webflowPosts
                 ], 200);
-            }
         } catch (Exception $e) {
-            
+                dd($e->getMessage());
         }
 
         return response()->json([], 400);
@@ -84,7 +91,7 @@ class ApiController extends Controller
     {
         try {
             //Fetching collection from Lever
-            $records = $this->_webflow->items();
+            $records = $this->_webflow->items();dd('This code will directly update on server.. Be cautious..');
             $webflowPosts = collect($records['items']);
 
             if ($webflowPosts->count()) {
@@ -170,26 +177,30 @@ class ApiController extends Controller
      * @param bool
      * @param object
      */
-    private function __createpayload(array $post, $update = false, $existing)
+    private function __createpayload(array $post, $existing, $update = false)
     {
-        $payload =  [
-            'fields' => [
-                'lever-id-2'        => $post['id'],
-                'name'              => $post['text'],
-                'job-description'   => str_replace(PHP_EOL, '<br/>', $post['content']['description']),
-                'closing'           => $post['content']['closingHtml'],
-                'lists'             => $this->sortLists($post['content']['lists']),
-                'link-to-job'       => $post['urls']['show'],
-                'workplace'         => $post['categories']['commitment'],
-                'career-description' => $post['categories']['location'],
-                'team'              => $post['categories']['team'],
-                '_draft'            => iswebflowDraft($post['state']),
-                '_archived'         => iswebflowArchived($post['state'])
-            ]
-        ];
-
-        if ( $update ) {
+        if ($update) {
             $payload['fields']['slug'] = $existing->slug;
+            $payload['fields']['name'] = $post['text'];
+            $payload['fields']['_draft'] = iswebflowDraft($post['state']);
+            $payload['fields']['_archived'] = iswebflowArchived($post['state']);
+            $payload['fields']['career-description'] = $post['categories']['location'];
+        } else {
+            $payload =  [
+                'fields' => [
+                    'lever-id-2'        => $post['id'],
+                    'name'              => $post['text'],
+                    'job-description'   => str_replace(PHP_EOL, '<br/>', $post['content']['description']),
+                    'closing'           => $post['content']['closingHtml'],
+                    'lists'             => $this->sortLists($post['content']['lists']),
+                    'link-to-job'       => $post['urls']['show'],
+                    'workplace'         => $post['categories']['commitment'],
+                    'career-description' => $post['categories']['location'],
+                    'team'              => $post['categories']['team'],
+                    '_draft'            => iswebflowDraft($post['state']),
+                    '_archived'         => iswebflowArchived($post['state'])
+                ]
+            ];
         }
 
         return $payload;

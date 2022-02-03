@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
      * @return void
      */
     protected function schedule(Schedule $schedule)
-    { //twiceDaily(1, 13)
+    { 
         $schedule->command(SyncLeverJobs::class);
     }
 }
